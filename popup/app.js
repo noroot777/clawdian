@@ -198,15 +198,19 @@ class OpenCodeApp {
     this.updateSettingsStatus(this.isConnected, this.serverVersion)
   }
 
-  async openSidebar() {
+async openSidebar() {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-      if (tab?.id) {
-        await chrome.sidePanel.open({ tabId: tab.id })
-        window.close()
+      // Send message to background to toggle injected sidebar
+      const response = await chrome.runtime.sendMessage({ type: 'TOGGLE_SIDEBAR' })
+      if (response?.success) {
+        window.close() // Close popup after toggling sidebar
+      } else if (response?.error) {
+        // Show error to user
+        this.addMessage('assistant', `⚠️ ${response.error}`)
       }
     } catch (e) {
-      console.error('Failed to open sidebar:', e)
+      console.error('Failed to toggle sidebar:', e)
+      this.addMessage('assistant', '⚠️ 无法打开侧边栏，请刷新页面后重试')
     }
   }
 
