@@ -16,6 +16,9 @@ class OpenCodeApp {
   }
 
   async init() {
+    // Detect sidebar mode
+    this.detectSidebarMode()
+    
     // Load saved settings
     await this.loadSettings()
     
@@ -30,6 +33,26 @@ class OpenCodeApp {
     
     // Auto-resize textarea
     this.setupTextarea()
+  }
+
+  detectSidebarMode() {
+    // Sidebar mode detection:
+    // - Popup is typically 380x520 (fixed size, opened from toolbar)
+    // - Sidebar is typically wider than 400px and fills browser height
+    // Check if we're in a side panel context by window dimensions
+    const isLikelyPopup = window.innerWidth <= 400 && window.innerHeight <= 600
+    const isSidebar = !isLikelyPopup && window.innerHeight > 500
+    
+    if (isSidebar) {
+      document.body.classList.add('sidebar-mode')
+    }
+    
+    // Listen for resize to adapt
+    window.addEventListener('resize', () => {
+      const isPopup = window.innerWidth <= 400 && window.innerHeight <= 600
+      const nowSidebar = !isPopup && window.innerHeight > 500
+      document.body.classList.toggle('sidebar-mode', nowSidebar)
+    })
   }
 
   async loadSettings() {
@@ -165,24 +188,22 @@ class OpenCodeApp {
     this.updateSendButton()
   }
 
+  showSettings() {
+    document.getElementById('settings-panel').classList.remove('hidden')
+    // 同步显示当前连接状态
+    this.updateSettingsStatus(this.isConnected, this.serverVersion)
+  }
+
   async openSidebar() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
       if (tab?.id) {
-        // 直接在 popup 中调用 sidePanel.open (用户手势上下文)
         await chrome.sidePanel.open({ tabId: tab.id })
-        // 关闭当前 popup
         window.close()
       }
     } catch (e) {
       console.error('Failed to open sidebar:', e)
     }
-  }
-
-  showSettings() {
-    document.getElementById('settings-panel').classList.remove('hidden')
-    // 同步显示当前连接状态
-    this.updateSettingsStatus(this.isConnected, this.serverVersion)
   }
 
   hideSettings() {
