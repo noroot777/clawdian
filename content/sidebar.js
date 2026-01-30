@@ -20,8 +20,9 @@
   let isLoading = false
   let isConnected = false
   let serverVersion = ''
-  let abortController = null
   let messages = []
+  let obsidianVault = ''
+  let obsidianFolder = 'Inbox'
 
   // ==================== DOM 元素 ====================
   let overlay = null
@@ -37,10 +38,12 @@
   async function init() {
     // 加载保存的宽度
     try {
-      const result = await chrome.storage.local.get([STORAGE_KEY, 'serverUrl', 'sessionId'])
+      const result = await chrome.storage.local.get([STORAGE_KEY, 'serverUrl', 'sessionId', 'obsidianVault', 'obsidianFolder'])
       if (result[STORAGE_KEY]) sidebarWidth = result[STORAGE_KEY]
       if (result.serverUrl) serverUrl = result.serverUrl
       if (result.sessionId) sessionId = result.sessionId
+      if (result.obsidianVault) obsidianVault = result.obsidianVault
+      if (result.obsidianFolder) obsidianFolder = result.obsidianFolder
     } catch (e) {
       console.error('[OpenCode] Failed to load settings:', e)
     }
@@ -88,7 +91,19 @@
         <!-- Header -->
         <div class="sidebar-header">
           <div class="header-left">
-            <span class="logo">⚡</span>
+            <svg class="header-logo" width="24" height="24" viewBox="0 0 128 128" fill="none">
+              <defs>
+                <linearGradient id="oc-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#7c3aed"/>
+                  <stop offset="100%" stop-color="#a78bfa"/>
+                </linearGradient>
+              </defs>
+              <rect width="128" height="128" rx="28" fill="url(#oc-bg)"/>
+              <path d="M48 38L28 64L48 90" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M80 38L100 64L80 90" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="64" cy="64" r="8" fill="white" opacity="0.9"/>
+              <circle cx="64" cy="64" r="4" fill="white"/>
+            </svg>
             <span class="title">OpenCode</span>
           </div>
           <div class="header-right">
@@ -96,6 +111,12 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+            <button class="icon-btn btn-settings" title="设置">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
             </button>
             <button class="icon-btn btn-close" title="关闭">
@@ -147,12 +168,70 @@
             <input type="checkbox" id="opencode-include-page" checked>
             <span>附带当前页面内容</span>
           </label>
+          <!-- Plugin Dock - below context toggle -->
+          <div class="plugin-dock">
+            <div class="plugin-header">
+              <span>插件</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+            <div class="plugin-grid">
+              <button class="plugin-item" data-plugin="obsidian" title="Obsidian">
+                <span class="plugin-icon">🗒️</span>
+                <span class="plugin-name">Obsidian</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Status Bar -->
         <div class="status-bar">
           <span class="status-dot"></span>
           <span class="status-text">正在连接...</span>
+        </div>
+
+        <!-- Settings Panel (hidden by default) -->
+        <div class="settings-panel hidden">
+          <div class="settings-header">
+            <button class="icon-btn btn-back">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            <span class="settings-title">设置</span>
+          </div>
+          <div class="settings-content">
+            <div class="settings-section">
+              <label class="settings-label">服务器地址</label>
+              <input type="text" class="settings-input server-url-input" placeholder="http://localhost:4096">
+              <div class="settings-status">
+                <span class="status-dot settings-status-dot"></span>
+                <span class="settings-status-text">未连接</span>
+              </div>
+            </div>
+            <div class="settings-section">
+              <label class="settings-label">Obsidian Vault 路径</label>
+              <input type="text" class="settings-input obsidian-vault-input" placeholder="C:\\Users\\...\\MyVault">
+            </div>
+            <div class="settings-section">
+              <label class="settings-label">Obsidian 保存文件夹</label>
+              <input type="text" class="settings-input obsidian-folder-input" placeholder="Inbox">
+            </div>
+          </div>
+        </div>
+
+        <!-- Plugin Panel (hidden by default) -->
+        <div class="plugin-panel hidden">
+          <div class="plugin-panel-header">
+            <button class="icon-btn btn-plugin-back">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            <span class="plugin-panel-title">插件</span>
+          </div>
+          <div class="plugin-panel-content"></div>
         </div>
       </div>
     `
@@ -165,6 +244,44 @@
     
     // 新建会话
     sidebar.querySelector('.btn-new-session').addEventListener('click', startNewSession)
+    
+    // 设置按钮
+    sidebar.querySelector('.btn-settings').addEventListener('click', showSettings)
+    sidebar.querySelector('.btn-back').addEventListener('click', hideSettings)
+    
+    // 设置输入
+    const serverUrlInput = sidebar.querySelector('.server-url-input')
+    const obsidianVaultInput = sidebar.querySelector('.obsidian-vault-input')
+    const obsidianFolderInput = sidebar.querySelector('.obsidian-folder-input')
+    
+    serverUrlInput.value = serverUrl
+    obsidianVaultInput.value = obsidianVault
+    obsidianFolderInput.value = obsidianFolder
+    
+    serverUrlInput.addEventListener('change', (e) => {
+      serverUrl = e.target.value
+      saveSettings()
+      checkConnection()
+    })
+    obsidianVaultInput.addEventListener('change', (e) => {
+      obsidianVault = e.target.value
+      saveSettings()
+    })
+    obsidianFolderInput.addEventListener('change', (e) => {
+      obsidianFolder = e.target.value
+      saveSettings()
+    })
+    
+    // 插件 Dock 折叠
+    sidebar.querySelector('.plugin-header').addEventListener('click', () => {
+      sidebar.querySelector('.plugin-dock').classList.toggle('collapsed')
+    })
+    
+    // 插件项点击
+    sidebar.querySelectorAll('.plugin-item[data-plugin]').forEach(item => {
+      item.addEventListener('click', () => showPluginPanel(item.dataset.plugin))
+    })
+    sidebar.querySelector('.btn-plugin-back').addEventListener('click', hidePluginPanel)
     
     // 发送消息
     sendBtn.addEventListener('click', handleSendClick)
@@ -213,6 +330,207 @@
         chrome.storage.local.set({ [STORAGE_KEY]: sidebarWidth }).catch(() => {})
       }
     })
+  }
+  
+  // ==================== 设置面板 ====================
+  function showSettings() {
+    const panel = sidebar.querySelector('.settings-panel')
+    panel.classList.remove('hidden')
+    panel.offsetHeight // 强制重排
+    panel.classList.add('visible')
+    updateSettingsStatus()
+  }
+  
+  function hideSettings() {
+    const panel = sidebar.querySelector('.settings-panel')
+    panel.classList.remove('visible')
+    setTimeout(() => {
+      if (!panel.classList.contains('visible')) {
+        panel.classList.add('hidden')
+      }
+    }, 300)
+  }
+  
+  function updateSettingsStatus() {
+    const dot = sidebar.querySelector('.settings-status-dot')
+    const text = sidebar.querySelector('.settings-status-text')
+    if (dot && text) {
+      dot.className = 'status-dot settings-status-dot ' + (isConnected ? 'connected' : 'error')
+      text.textContent = isConnected ? `已连接 · v${serverVersion}` : '未连接'
+    }
+  }
+  
+  async function saveSettings() {
+    try {
+      await chrome.storage.local.set({
+        serverUrl,
+        sessionId,
+        obsidianVault,
+        obsidianFolder
+      })
+    } catch (e) {
+      console.error('[OpenCode] Failed to save settings:', e)
+    }
+  }
+  
+  // ==================== 插件面板 ====================
+  function showPluginPanel(pluginId) {
+    const panel = sidebar.querySelector('.plugin-panel')
+    const title = sidebar.querySelector('.plugin-panel-title')
+    const content = sidebar.querySelector('.plugin-panel-content')
+    
+    if (pluginId === 'obsidian') {
+      title.textContent = '🗒️ Obsidian'
+      content.innerHTML = `
+        <div class="plugin-actions">
+          <button class="plugin-action-btn" data-action="save-page">
+            <span class="icon">📥</span>
+            <span>保存当前页面</span>
+          </button>
+          <button class="plugin-action-btn" data-action="save-summary">
+            <span class="icon">📝</span>
+            <span>保存并总结</span>
+          </button>
+          <button class="plugin-action-btn" data-action="save-selection">
+            <span class="icon">🔖</span>
+            <span>保存选中内容</span>
+          </button>
+        </div>
+      `
+      
+      // 绑定插件操作
+      content.querySelectorAll('.plugin-action-btn').forEach(btn => {
+        btn.addEventListener('click', () => executePluginAction('obsidian', btn.dataset.action))
+      })
+    }
+    
+    panel.classList.remove('hidden')
+    panel.offsetHeight
+    panel.classList.add('visible')
+  }
+  
+  function hidePluginPanel() {
+    const panel = sidebar.querySelector('.plugin-panel')
+    panel.classList.remove('visible')
+    setTimeout(() => {
+      if (!panel.classList.contains('visible')) {
+        panel.classList.add('hidden')
+      }
+    }, 300)
+  }
+  
+  async function executePluginAction(plugin, action) {
+    hidePluginPanel()
+    
+    let prompt = ''
+    
+    if (plugin === 'obsidian') {
+      if (!obsidianVault) {
+        addMessage('assistant', '❌ 请先在设置中配置 Obsidian Vault 路径')
+        return
+      }
+      
+      const pageContent = getPageContent()
+      const pageTitle = pageContent?.title || 'Untitled'
+      const pageUrl = pageContent?.url || window.location.href
+      const sanitizedTitle = sanitizeFilename(pageTitle)
+      const filename = `${sanitizedTitle}.md`
+      const fullPath = buildFilePath(obsidianVault, obsidianFolder, filename)
+      const today = new Date().toISOString().split('T')[0]
+      
+      switch (action) {
+        case 'save-page':
+          prompt = `请使用 Write 工具将以下网页内容保存为 Markdown 文件。
+
+**文件路径**: ${fullPath}
+
+**文件内容要求**:
+1. 开头添加 YAML frontmatter：
+\`\`\`
+---
+title: "${pageTitle}"
+source: "${pageUrl}"
+date: ${today}
+tags: [web-clip]
+---
+\`\`\`
+2. 然后是正文内容（保持 Markdown 格式）
+
+请直接执行 Write 工具写入文件，不要询问确认。`
+          break
+        case 'save-summary':
+          prompt = `请总结以下网页内容，并使用 Write 工具保存为 Markdown 文件。
+
+**文件路径**: ${fullPath}
+
+**文件内容要求**:
+1. 开头添加 YAML frontmatter：
+\`\`\`
+---
+title: "${pageTitle}"
+source: "${pageUrl}"
+date: ${today}
+tags: [web-clip, summary]
+---
+\`\`\`
+2. 然后是你的总结（使用清晰的标题和要点）
+
+请直接执行 Write 工具写入文件，不要询问确认。`
+          break
+        case 'save-selection':
+          prompt = `请使用 Write 工具将用户选中的内容保存为 Markdown 文件。
+
+**文件路径**: ${fullPath}
+
+**文件内容要求**:
+1. 开头添加 YAML frontmatter：
+\`\`\`
+---
+title: "${pageTitle} - 摘录"
+source: "${pageUrl}"
+date: ${today}
+tags: [web-clip, excerpt]
+---
+\`\`\`
+2. 然后是选中的内容（保持格式）
+
+请直接执行 Write 工具写入文件，不要询问确认。`
+          break
+      }
+    }
+    
+    if (prompt) {
+      inputMessage.value = prompt
+      includePageCheckbox.checked = true
+      await sendMessage()
+    }
+  }
+  
+  // ==================== 工具函数 ====================
+  function getOS() {
+    const platform = navigator.platform.toLowerCase()
+    if (platform.includes('win')) return 'windows'
+    if (platform.includes('mac')) return 'macos'
+    return 'linux'
+  }
+  
+  function buildFilePath(basePath, folder, filename) {
+    const os = getOS()
+    const sep = os === 'windows' ? '\\' : '/'
+    let normalizedBase = basePath.replace(/[/\\]+/g, sep)
+    let normalizedFolder = folder.replace(/[/\\]+/g, sep)
+    normalizedBase = normalizedBase.replace(new RegExp(`[${sep.replace('\\', '\\\\')}]+$`), '')
+    normalizedFolder = normalizedFolder.replace(new RegExp(`^[${sep.replace('\\', '\\\\')}]+|[${sep.replace('\\', '\\\\')}]+$`, 'g'), '')
+    return `${normalizedBase}${sep}${normalizedFolder}${sep}${filename}`
+  }
+  
+  function sanitizeFilename(title) {
+    return title
+      .replace(/[<>:"/\\|?*]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 100)
+      || 'Untitled'
   }
 
   // ==================== 侧边栏开关 ====================
@@ -384,7 +702,6 @@
   // ==================== API 调用 ====================
   async function sendToOpenCode(message, pageContent) {
     isLoading = true
-    abortController = new AbortController()
     updateSendButton()
     addLoadingMessage()
     setStatus('loading', '处理中...')
@@ -440,34 +757,28 @@
       setStatus('connected', serverUrl.replace('http://', ''))
 
     } catch (e) {
-      if (e.name === 'AbortError') return
       console.error('[OpenCode] Failed to send:', e)
       removeLoadingMessage()
       addMessage('assistant', `❌ 错误: ${e.message}`)
       setStatus('error', '请求失败')
     } finally {
       isLoading = false
-      abortController = null
       updateSendButton()
     }
   }
 
   async function abortRequest() {
-    if (abortController) {
-      abortController.abort()
-      abortController = null
-    }
-
+    // Note: We can't abort the background fetch, but we can call the abort API
+    isLoading = false
+    
     if (sessionId) {
       try {
-        await fetch(`${serverUrl}/session/${sessionId}/abort`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        })
-      } catch (e) {}
+        await apiCall('POST', `/session/${sessionId}/abort`)
+      } catch (e) {
+        console.error('[OpenCode] Failed to abort:', e)
+      }
     }
 
-    isLoading = false
     removeLoadingMessage()
     addMessage('assistant', '⏹ 已停止')
     setStatus('connected', serverUrl.replace('http://', ''))
@@ -475,36 +786,39 @@
   }
 
   async function apiCall(method, path, body = null) {
-    const options = {
+    // Route API calls through background script to avoid CORS issues
+    const url = `${serverUrl}${path}`
+    const response = await chrome.runtime.sendMessage({
+      type: 'API_REQUEST',
       method,
-      headers: { 'Content-Type': 'application/json' }
-    }
-    if (body) options.body = JSON.stringify(body)
-    if (abortController) options.signal = abortController.signal
+      url,
+      body
+    })
 
-    const response = await fetch(`${serverUrl}${path}`, options)
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '')
-      throw new Error(`HTTP ${response.status}: ${errorText}`)
+    if (response.error) {
+      throw new Error(response.error)
     }
 
-    if (response.status === 204) return {}
-    return response.json()
+    return response.data
   }
 
   async function checkConnection() {
     setStatus('loading', '正在连接...')
+    console.log('[OpenCode] Checking connection to:', serverUrl)
 
     try {
       const health = await apiCall('GET', '/global/health')
       isConnected = true
       serverVersion = health.version
       setStatus('connected', `${serverUrl.replace('http://', '')} · v${health.version}`)
+      updateSettingsStatus()
+      console.log('[OpenCode] Connected successfully:', health.version)
     } catch (e) {
       isConnected = false
       serverVersion = ''
       setStatus('error', '无法连接到 OpenCode')
+      updateSettingsStatus()
+      console.error('[OpenCode] Connection failed:', e.message)
     }
   }
 

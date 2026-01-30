@@ -15,6 +15,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'GET_PAGE_CONTENT') {
     handleGetPageContent(message.tabId).then(sendResponse)
     return true // 保持消息通道开放
+  } else if (message.type === 'API_REQUEST') {
+    // Proxy API requests to avoid CORS issues in content scripts
+    handleApiRequest(message.method, message.url, message.body).then(sendResponse)
+    return true // 保持消息通道开放
   }
 })
 
@@ -120,6 +124,36 @@ async function handleGetPageContent(tabId) {
     return results[0]?.result || { error: 'Failed to extract content' }
   } catch (e) {
     console.error('Failed to get page content:', e)
+    return { error: e.message }
+  }
+}
+
+// 代理 API 请求 (避免 CORS 问题)
+async function handleApiRequest(method, url, body = null) {
+  try {
+    const options = {
+      method,
+      headers: { 'Content-Type': 'application/json' }
+    }
+    if (body) {
+      options.body = JSON.stringify(body)
+    }
+
+    const response = await fetch(url, options)
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      return { error: `HTTP ${response.status}: ${errorText}` }
+    }
+
+    if (response.status === 204) {
+      return { data: {} }
+    }
+
+    const data = await response.json()
+    return { data }
+  } catch (e) {
+    console.error('API request failed:', e)
     return { error: e.message }
   }
 }
