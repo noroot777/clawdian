@@ -477,8 +477,18 @@ tags: [web-clip, excerpt]
 
       this.removeLoadingMessage()
 
+      // Check for error in response
+      // Response format: { info: { error?: {...} }, parts: Part[] }
+      if (result.info?.error) {
+        const error = result.info.error
+        const errorName = error.name || 'Error'
+        const errorMessage = error.data?.message || JSON.stringify(error.data) || '未知错误'
+        this.addMessage('assistant', `❌ ${errorName}: ${errorMessage}`)
+        this.setStatus('error', '请求失败')
+        return
+      }
+
       // Extract response text from result
-      // Response format: { info: Message, parts: Part[] }
       let responseText = ''
       if (result.parts) {
         for (const part of result.parts) {
@@ -488,7 +498,13 @@ tags: [web-clip, excerpt]
         }
       }
 
-      this.addMessage('assistant', responseText || '完成')
+      if (!responseText) {
+        this.addMessage('assistant', '⚠️ 服务器返回空响应')
+        this.setStatus('connected', this.serverUrl.replace('http://', ''))
+        return
+      }
+
+      this.addMessage('assistant', responseText)
       this.setStatus('connected', this.serverUrl.replace('http://', ''))
 
     } catch (e) {
