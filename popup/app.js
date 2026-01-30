@@ -189,7 +189,11 @@ class OpenCodeApp {
   }
 
   showSettings() {
-    document.getElementById('settings-panel').classList.remove('hidden')
+    const panel = document.getElementById('settings-panel')
+    panel.classList.remove('hidden')
+    // Trigger reflow for animation
+    panel.offsetHeight
+    panel.classList.add('visible')
     // 同步显示当前连接状态
     this.updateSettingsStatus(this.isConnected, this.serverVersion)
   }
@@ -207,7 +211,14 @@ class OpenCodeApp {
   }
 
   hideSettings() {
-    document.getElementById('settings-panel').classList.add('hidden')
+    const panel = document.getElementById('settings-panel')
+    panel.classList.remove('visible')
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+      if (!panel.classList.contains('visible')) {
+        panel.classList.add('hidden')
+      }
+    }, 300)
   }
 
   async startNewSession() {
@@ -219,7 +230,12 @@ class OpenCodeApp {
     const chatArea = document.getElementById('chat-area')
     chatArea.innerHTML = `
       <div class="welcome-message">
-        <div class="welcome-icon">👋</div>
+        <div class="welcome-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true">
+            <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity="0.3"/>
+          </svg>
+        </div>
         <div class="welcome-text">有什么可以帮你的？</div>
         <div class="welcome-hints">
           <p>我可以帮你：</p>
@@ -271,10 +287,20 @@ class OpenCodeApp {
     }
     
     panel.classList.remove('hidden')
+    // Trigger reflow for animation
+    panel.offsetHeight
+    panel.classList.add('visible')
   }
 
   hidePluginPanel() {
-    document.getElementById('plugin-panel').classList.add('hidden')
+    const panel = document.getElementById('plugin-panel')
+    panel.classList.remove('visible')
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+      if (!panel.classList.contains('visible')) {
+        panel.classList.add('hidden')
+      }
+    }, 300)
   }
 
   async executePluginAction(plugin, action) {

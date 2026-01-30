@@ -1,11 +1,45 @@
 <svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#7c3aed"/>
-      <stop offset="100%" style="stop-color:#a78bfa"/>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="sparkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0d4ff"/>
     </linearGradient>
   </defs>
-  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
-  <path d="M40 64L56 48L72 64L88 48" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M40 80L56 64L72 80L88 64" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+  
+  <!-- Background -->
+  <rect width="128" height="128" rx="28" fill="url(#bgGradient)"/>
+  
+  <!-- Left bracket < -->
+  <path 
+    d="M48 38L28 64L48 90" 
+    stroke="white" 
+    stroke-width="8" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+  />
+  
+  <!-- Right bracket > -->
+  <path 
+    d="M80 38L100 64L80 90" 
+    stroke="white" 
+    stroke-width="8" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+  />
+  
+  <!-- Center spark - AI indicator -->
+  <circle cx="64" cy="64" r="8" fill="url(#sparkGradient)"/>
+  <circle cx="64" cy="64" r="4" fill="white"/>
+  
+  <!-- Spark rays -->
+  <line x1="64" y1="50" x2="64" y2="56" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="64" y1="72" x2="64" y2="78" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="50" y1="64" x2="56" y2="64" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="72" y1="64" x2="78" y2="64" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
 </svg>

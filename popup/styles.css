@@ -24,8 +24,8 @@
     --bg-secondary: #252542;
     --bg-tertiary: #2f2f4a;
     --text-primary: #e5e5e5;
-    --text-secondary: #a0a0a0;
-    --text-tertiary: #707070;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #8a8a8a;
     --accent: #a78bfa;
     --accent-hover: #8b5cf6;
     --accent-light: #2e2854;
@@ -57,8 +57,8 @@
   --bg-secondary: #252542;
   --bg-tertiary: #2f2f4a;
   --text-primary: #e5e5e5;
-  --text-secondary: #a0a0a0;
-  --text-tertiary: #707070;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #8a8a8a;
   --accent: #a78bfa;
   --accent-hover: #8b5cf6;
   --accent-light: #2e2854;
@@ -173,6 +173,21 @@ body {
   text-align: center;
   padding: 32px 16px;
   color: var(--text-secondary);
+  background: linear-gradient(135deg, var(--accent-light) 0%, transparent 50%);
+  border-radius: 16px;
+  margin: 8px;
+  animation: welcomeFadeIn 0.5s ease-out;
+}
+
+@keyframes welcomeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .welcome-icon {
@@ -201,11 +216,24 @@ body {
   margin: 4px 0;
 }
 
+/* Message animations */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Message bubbles */
 .message {
   display: flex;
   gap: 12px;
   max-width: 100%;
+  animation: messageSlideIn 0.3s ease-out;
 }
 
 .message-user {
@@ -391,9 +419,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 8px 16px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
   user-select: none;
 }
@@ -417,7 +445,7 @@ body {
 .plugin-grid {
   display: flex;
   gap: 8px;
-  padding: 0 16px 12px;
+  padding: 0 16px 10px;
   overflow-x: auto;
 }
 
@@ -426,8 +454,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border: 1px solid var(--border);
   background: var(--bg-secondary);
   border-radius: 12px;
@@ -439,11 +467,12 @@ body {
 .plugin-item:hover {
   border-color: var(--accent);
   background: var(--accent-light);
+  transform: translateY(-2px);
 }
 
 .plugin-icon {
-  font-size: 24px;
-  margin-bottom: 4px;
+  font-size: 20px;
+  margin-bottom: 2px;
 }
 
 .plugin-name {
@@ -510,11 +539,18 @@ body {
   z-index: 100;
   display: flex;
   flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-panel.visible,
+.plugin-panel.visible {
+  transform: translateX(0);
 }
 
 .settings-panel.hidden,
 .plugin-panel.hidden {
-  display: none;
+  transform: translateX(100%);
 }
 
 .settings-header,
@@ -758,4 +794,116 @@ body {
 
 .sidebar-mode .status-bar {
   padding: 6px 12px;
+}
+
+/* Skeleton Loading States */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 0px,
+    var(--bg-tertiary) 40px,
+    var(--bg-secondary) 80px
+  );
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+.skeleton-message {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.skeleton-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+}
+
+.skeleton-line:nth-child(1) {
+  width: 80%;
+}
+
+.skeleton-line:nth-child(2) {
+  width: 60%;
+}
+
+.skeleton-line:nth-child(3) {
+  width: 40%;
+}
+
+/* Logo in header */
+.header-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+/* Focus visible for accessibility */
+.icon-btn:focus-visible,
+.send-btn:focus-visible,
+.plugin-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Improved button hover states */
+.icon-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: inherit;
+}
+
+.icon-btn:hover::after {
+  opacity: 0.1;
+}
+
+/* Send button pulse animation when ready */
+@keyframes sendPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(124, 58, 237, 0);
+  }
+}
+
+.send-btn:not(:disabled):not(.stop) {
+  animation: sendPulse 2s infinite;
+}
+
+.send-btn:hover {
+  animation: none;
 }
