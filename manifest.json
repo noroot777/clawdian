@@ -22,8 +22,15 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["lib/readability.min.js", "lib/turndown.min.js", "content/extractor.js"],
+      "js": ["lib/readability.min.js", "lib/turndown.min.js", "content/extractor.js", "content/sidebar.js"],
+      "css": ["content/sidebar.css"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
     }
   ],
   "permissions": [
