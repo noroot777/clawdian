@@ -3,22 +3,43 @@
 // 使用 default_popup，不需要 onClicked 监听器
 // Popup 会自动作为悬浮面板打开
 
+let popupWindowId = null
+
 // 处理来自 popup 的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // 统一的异步处理包装器，确保始终发送响应
+  const handleAsync = (promise) => {
+    promise
+      .then(response => {
+        try {
+          sendResponse(response)
+        } catch (e) {
+          console.error('Failed to send response:', e)
+        }
+      })
+      .catch(e => {
+        console.error('Async handler failed:', e)
+        try {
+          sendResponse({ error: e.message || 'Unknown error' })
+        } catch (err) {
+          console.error('Failed to send error response:', err)
+        }
+      })
+    return true // 保持消息通道开放
+  }
+
   if (message.type === 'OPEN_SIDEPANEL') {
     handleOpenSidePanel(message.tabId)
     sendResponse({ success: true })
+    return false
   } else if (message.type === 'TOGGLE_SIDEBAR') {
     // Toggle injected sidebar in content script
-    handleToggleSidebar(message.tabId).then(sendResponse)
-    return true // 保持消息通道开放
+    return handleAsync(handleToggleSidebar(message.tabId))
   } else if (message.type === 'GET_PAGE_CONTENT') {
-    handleGetPageContent(message.tabId).then(sendResponse)
-    return true // 保持消息通道开放
+    return handleAsync(handleGetPageContent(message.tabId))
   } else if (message.type === 'API_REQUEST') {
     // Proxy API requests to avoid CORS issues in content scripts
-    handleApiRequest(message.method, message.url, message.body).then(sendResponse)
-    return true // 保持消息通道开放
+    return handleAsync(handleApiRequest(message.method, message.url, message.body))
   }
 })
 

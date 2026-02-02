@@ -15,6 +15,14 @@
       let excerpt = ''
 
       // 尝试使用 Readability 提取正文
+      // 特殊处理 Twitter/X
+      if (window.location.hostname.includes('twitter.com') || window.location.hostname.includes('x.com')) {
+        const twitterData = extractTwitterContent()
+        if (twitterData) {
+          return twitterData
+        }
+      }
+
       if (typeof Readability !== 'undefined') {
         try {
           const reader = new Readability(documentClone)
@@ -93,6 +101,77 @@
         url: window.location.href,
         title: document.title
       }
+    }
+  }
+
+  // Twitter 专用提取逻辑
+  function extractTwitterContent() {
+    try {
+      const tweets = document.querySelectorAll('article[data-testid="tweet"]')
+      if (tweets.length === 0) return null
+
+      const tweet = tweets[0]
+      
+      // 提取文本
+      const textNode = tweet.querySelector('[data-testid="tweetText"]')
+      const text = textNode ? textNode.innerText : ''
+      
+      // 提取作者
+      const userNode = tweet.querySelector('[data-testid="User-Name"]')
+      const authorRaw = userNode ? userNode.innerText.split('\n') : ['Unknown', '']
+      const authorName = authorRaw[0]
+      const authorHandle = authorRaw[1]
+      
+      // 提取图片和视频封面
+      let mediaMarkdown = ''
+      
+      // 图片 - 获取高清图
+      const photos = tweet.querySelectorAll('[data-testid="tweetPhoto"] img')
+      photos.forEach((img, index) => {
+        let src = img.src
+        if (src.includes('name=')) {
+          src = src.replace(/name=[a-zA-Z0-9_]+/, 'name=large')
+        }
+        mediaMarkdown += `\n![image-${index + 1}](${src})\n`
+      })
+
+      // 视频
+      const video = tweet.querySelector('[data-testid="videoPlayer"] video')
+      if (video && video.poster) {
+        mediaMarkdown += `\n![video-poster](${video.poster})\n> [包含视频/GIF]`
+      }
+      
+      // 链接和时间
+      const timeNode = tweet.querySelector('time')
+      const publishedTime = timeNode ? timeNode.getAttribute('datetime') : new Date().toISOString()
+      const statusLink = tweet.querySelector('a[href*="/status/"]')
+      const url = statusLink ? statusLink.href : window.location.href
+
+      // 组装 Markdown
+      const content = `${text}\n\n${mediaMarkdown}`.trim()
+      
+      return {
+        url,
+        title: `Tweet from ${authorName} (${authorHandle})`,
+        content, // 直接返回 Markdown
+        excerpt: text.substring(0, 100),
+        meta: {
+          author: authorName,
+          publishedTime,
+          siteName: 'Twitter'
+        },
+        isTweet: true, // 标记为推文
+        tweetData: {
+          authorName,
+          authorHandle,
+          publishedTime
+        },
+        wordCount: content.length,
+        extractedAt: new Date().toISOString()
+      }
+    } catch (e) {
+      console.error('Twitter extraction failed:', e)
+      return null
     }
   }
 

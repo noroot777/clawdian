@@ -256,15 +256,32 @@ async openSidebar() {
     await this.saveSettings()
   }
 
-  showPluginPanel(pluginId) {
+  async showPluginPanel(pluginId) {
     const panel = document.getElementById('plugin-panel')
     const title = document.getElementById('plugin-panel-title')
     const content = document.getElementById('plugin-panel-content')
     
     if (pluginId === 'obsidian') {
       title.textContent = '🗒️ Obsidian'
+      
+      // Check if we are on Twitter
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+      const currentUrl = tabs[0]?.url || ''
+      const isTwitter = currentUrl.includes('twitter.com') || currentUrl.includes('x.com')
+
+      let extraButtons = ''
+      if (isTwitter) {
+        extraButtons = `
+          <button class="plugin-action-btn special-btn" data-action="save-tweet-uri">
+            <span class="icon">🐦</span>
+            <span>保存推文 (URI)</span>
+          </button>
+        `
+      }
+
       content.innerHTML = `
         <div class="plugin-actions">
+          ${extraButtons}
           <button class="plugin-action-btn" data-action="save-page">
             <span class="icon">📥</span>
             <span>保存当前页面</span>
@@ -330,6 +347,35 @@ async openSidebar() {
       const fullPath = this.buildFilePath(vaultPath, folderPath, filename)
       const today = new Date().toISOString().split('T')[0]
       
+      if (action === 'save-tweet-uri') {
+        if (!pageContent || !pageContent.isTweet) {
+          this.addMessage('assistant', '⚠️ 未检测到推文内容，请确保在推文详情页或书签页')
+          return
+        }
+
+        const authorName = pageContent.tweetData?.authorName || 'Unknown'
+        const fileName = `Tweet - ${authorName} - ${Date.now()}`
+        
+        const fullMarkdown = `---
+created: ${pageContent.extractedAt}
+source: ${pageContent.url}
+author: ${authorName}
+tags: [tweet]
+---
+
+${pageContent.content}
+
+> [原推文](${pageContent.url})
+`
+        
+        const obsidianUrl = `obsidian://new?name=${encodeURIComponent(fileName)}&content=${encodeURIComponent(fullMarkdown)}`
+        
+        // Use tabs.create to avoid popup blocking and ensure it opens
+        chrome.tabs.create({ url: obsidianUrl })
+        this.addMessage('assistant', '✅ 已尝试唤起 Obsidian')
+        return
+      }
+
       switch (action) {
         case 'save-page':
           prompt = `请使用 Write 工具将以下网页内容保存为 Markdown 文件。
