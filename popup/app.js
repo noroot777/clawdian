@@ -261,6 +261,96 @@ async openSidebar() {
     const title = document.getElementById('plugin-panel-title')
     const content = document.getElementById('plugin-panel-content')
     
+    if (pluginId === 'twitter-sync') {
+      title.textContent = '🔄 书签同步'
+      
+      // Get sync status
+      const storage = await chrome.storage.local.get(['twitter_last_synced_id'])
+      const lastId = storage.twitter_last_synced_id || '无记录'
+      
+      content.innerHTML = `
+        <div class="plugin-section">
+          <div class="sync-status-card">
+            <div class="label">上次同步断点 (Tweet ID)</div>
+            <div class="value">${lastId}</div>
+          </div>
+          
+          <div class="sync-options">
+            <label class="radio-option">
+              <input type="radio" name="sync-mode" value="resume" checked>
+              <div class="option-text">
+                <span class="title">增量同步 (推荐)</span>
+                <span class="desc">从上次断点处继续，只抓取新书签</span>
+              </div>
+            </label>
+            
+            <label class="radio-option">
+              <input type="radio" name="sync-mode" value="full">
+              <div class="option-text">
+                <span class="title">全量同步</span>
+                <span class="desc">重新扫描所有书签 (耗时较长)</span>
+              </div>
+            </label>
+
+            <div class="input-group" style="margin-top: 15px;">
+              <label>保存文件夹</label>
+              <input type="text" id="sync-folder" value="X书签" placeholder="例如: X书签">
+            </div>
+
+            <div class="input-group" style="margin-top: 10px;">
+              <label>指定起始 ID (可选)</label>
+              <input type="text" id="sync-target-id" placeholder="如果不填，则使用上次断点">
+            </div>
+          </div>
+
+          <button class="plugin-action-btn primary" id="btn-start-sync" style="margin-top: 20px;">
+            <span class="icon">🚀</span>
+            <span>开始同步</span>
+          </button>
+        </div>
+      `
+      
+      // Bind events
+      const btnStart = content.querySelector('#btn-start-sync')
+      btnStart.addEventListener('click', async () => {
+        const mode = content.querySelector('input[name="sync-mode"]:checked').value
+        const folder = content.querySelector('#sync-folder').value
+        const manualTargetId = content.querySelector('#sync-target-id').value.trim()
+        
+        let targetId = null
+        if (mode === 'resume') {
+          targetId = manualTargetId || (lastId !== '无记录' ? lastId : null)
+        }
+
+        // Check if we are on Twitter Bookmarks page
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+        const currentUrl = tabs[0]?.url || ''
+        
+        if (!currentUrl.includes('twitter.com/i/bookmarks') && !currentUrl.includes('x.com/i/bookmarks')) {
+           // Try to navigate or warn
+           this.addMessage('assistant', '⚠️ 正在跳转到推特书签页，请在页面加载完成后再次点击“开始同步”')
+           await chrome.tabs.update(tabs[0].id, { url: 'https://twitter.com/i/bookmarks' })
+           return
+        }
+
+        // Send command to content script
+        try {
+          await chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'START_SYNC',
+            options: {
+              mode,
+              targetId,
+              folderName: folder
+            }
+          })
+          window.close() // Close popup to let the script run
+        } catch (e) {
+          this.addMessage('assistant', '❌ 启动失败: 请刷新推特页面后重试')
+          console.error(e)
+        }
+      })
+    }
+    
     if (pluginId === 'obsidian') {
       title.textContent = '🗒️ Obsidian'
       
