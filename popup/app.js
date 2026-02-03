@@ -235,9 +235,8 @@ async openSidebar() {
     chatArea.innerHTML = `
       <div class="welcome-message">
         <div class="welcome-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" aria-hidden="true">
-            <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity="0.3"/>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         </div>
         <div class="welcome-text">有什么可以帮你的？</div>
@@ -262,7 +261,7 @@ async openSidebar() {
     const content = document.getElementById('plugin-panel-content')
     
     if (pluginId === 'twitter-sync') {
-      title.textContent = '🔄 书签同步'
+      title.textContent = '书签同步'
       
       // Get sync status
       const storage = await chrome.storage.local.get(['twitter_last_synced_id'])
@@ -304,7 +303,11 @@ async openSidebar() {
           </div>
 
           <button class="plugin-action-btn primary" id="btn-start-sync" style="margin-top: 20px;">
-            <span class="icon">🚀</span>
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+            </span>
             <span>开始同步</span>
           </button>
         </div>
@@ -352,7 +355,7 @@ async openSidebar() {
     }
     
     if (pluginId === 'obsidian') {
-      title.textContent = '🗒️ Obsidian'
+      title.textContent = 'Obsidian'
       
       // Check if we are on Twitter
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -363,7 +366,11 @@ async openSidebar() {
       if (isTwitter) {
         extraButtons = `
           <button class="plugin-action-btn special-btn" data-action="save-tweet-uri">
-            <span class="icon">🐦</span>
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>
+              </svg>
+            </span>
             <span>保存推文 (URI)</span>
           </button>
         `
@@ -373,21 +380,34 @@ async openSidebar() {
         <div class="plugin-actions">
           ${extraButtons}
           <button class="plugin-action-btn" data-action="save-page">
-            <span class="icon">📥</span>
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </span>
             <span>保存当前页面</span>
           </button>
           <button class="plugin-action-btn" data-action="save-summary">
-            <span class="icon">📝</span>
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </span>
             <span>保存并总结</span>
           </button>
           <button class="plugin-action-btn" data-action="save-selection">
-            <span class="icon">🔖</span>
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
             <span>保存选中内容</span>
           </button>
-        </div>
-        <div class="plugin-settings-link">
-          <span>⚙️</span>
-          <span>插件设置</span>
         </div>
       `
       
@@ -529,7 +549,6 @@ tags: [web-clip, excerpt]
     
     if (prompt) {
       document.getElementById('input-message').value = prompt
-      document.getElementById('include-page').checked = true
       await this.sendMessage()
     }
   }
@@ -540,17 +559,12 @@ tags: [web-clip, excerpt]
     
     if (!message || this.isLoading) return
     
-    const includePage = document.getElementById('include-page').checked
-    
     // Clear input
     input.value = ''
     input.style.height = 'auto'
     
-    // Add user message to UI
-    let pageContent = null
-    if (includePage) {
-      pageContent = await this.getPageContent()
-    }
+    // Always include page content
+    const pageContent = await this.getPageContent()
     this.addMessage('user', message, pageContent)
     
     // Send to OpenCode
@@ -577,14 +591,16 @@ tags: [web-clip, excerpt]
     const messageEl = document.createElement('div')
     messageEl.className = `message message-${role}`
     
-    const avatar = role === 'user' ? '🧑' : '🤖'
+    const avatar = role === 'user' ? 'U' : 'AI'
     
     let attachmentHtml = ''
     if (attachment && attachment.url) {
       const domain = new URL(attachment.url).hostname
       attachmentHtml = `
         <div class="message-attachment">
-          <span>📎</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
           <span>${domain}</span>
         </div>
       `
@@ -614,7 +630,7 @@ tags: [web-clip, excerpt]
     messageEl.id = 'loading-message'
     
     messageEl.innerHTML = `
-      <div class="message-avatar">🤖</div>
+      <div class="message-avatar">AI</div>
       <div class="message-content">
         <div class="loading-dots">
           <span></span>

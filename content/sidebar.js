@@ -32,7 +32,6 @@
   let sendBtn = null
   let statusDot = null
   let statusText = null
-  let includePageCheckbox = null
 
   // ==================== 初始化 ====================
   async function init() {
@@ -78,7 +77,6 @@
     sendBtn = sidebar.querySelector('.send-btn')
     statusDot = sidebar.querySelector('.status-dot')
     statusText = sidebar.querySelector('.status-text')
-    includePageCheckbox = sidebar.querySelector('#opencode-include-page')
 
     // 绑定事件
     bindEvents()
@@ -91,19 +89,6 @@
         <!-- Header -->
         <div class="sidebar-header">
           <div class="header-left">
-            <svg class="header-logo" width="24" height="24" viewBox="0 0 128 128" fill="none">
-              <defs>
-                <linearGradient id="oc-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#7c3aed"/>
-                  <stop offset="100%" stop-color="#a78bfa"/>
-                </linearGradient>
-              </defs>
-              <rect width="128" height="128" rx="28" fill="url(#oc-bg)"/>
-              <path d="M48 38L28 64L48 90" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              <path d="M80 38L100 64L80 90" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              <circle cx="64" cy="64" r="8" fill="white" opacity="0.9"/>
-              <circle cx="64" cy="64" r="4" fill="white"/>
-            </svg>
             <span class="title">OpenCode</span>
           </div>
           <div class="header-right">
@@ -132,9 +117,8 @@
         <div class="chat-area">
           <div class="welcome-message">
             <div class="welcome-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5">
-                <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity="0.3"/>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
             </div>
             <div class="welcome-text">有什么可以帮你的？</div>
@@ -164,11 +148,7 @@
               </svg>
             </button>
           </div>
-          <label class="context-toggle">
-            <input type="checkbox" id="opencode-include-page" checked>
-            <span>附带当前页面内容</span>
-          </label>
-          <!-- Plugin Dock - below context toggle -->
+          <!-- Plugin Dock - below input -->
           <div class="plugin-dock">
             <div class="plugin-header">
               <span>插件</span>
@@ -178,8 +158,23 @@
             </div>
             <div class="plugin-grid">
               <button class="plugin-item" data-plugin="obsidian" title="Obsidian">
-                <span class="plugin-icon">🗒️</span>
+                <span class="plugin-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                </span>
                 <span class="plugin-name">Obsidian</span>
+              </button>
+              <button class="plugin-item" data-plugin="twitter-sync" title="推特书签同步">
+                <span class="plugin-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>
+                  </svg>
+                </span>
+                <span class="plugin-name">书签同步</span>
               </button>
             </div>
           </div>
@@ -374,25 +369,42 @@
   }
   
   // ==================== 插件面板 ====================
-  function showPluginPanel(pluginId) {
+  async function showPluginPanel(pluginId) {
     const panel = sidebar.querySelector('.plugin-panel')
     const title = sidebar.querySelector('.plugin-panel-title')
     const content = sidebar.querySelector('.plugin-panel-content')
     
     if (pluginId === 'obsidian') {
-      title.textContent = '🗒️ Obsidian'
+      title.textContent = 'Obsidian'
       content.innerHTML = `
         <div class="plugin-actions">
           <button class="plugin-action-btn" data-action="save-page">
-            <span class="icon">📥</span>
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </span>
             <span>保存当前页面</span>
           </button>
           <button class="plugin-action-btn" data-action="save-summary">
-            <span class="icon">📝</span>
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </span>
             <span>保存并总结</span>
           </button>
           <button class="plugin-action-btn" data-action="save-selection">
-            <span class="icon">🔖</span>
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
             <span>保存选中内容</span>
           </button>
         </div>
@@ -401,6 +413,112 @@
       // 绑定插件操作
       content.querySelectorAll('.plugin-action-btn').forEach(btn => {
         btn.addEventListener('click', () => executePluginAction('obsidian', btn.dataset.action))
+      })
+    }
+    
+    if (pluginId === 'twitter-sync') {
+      title.textContent = '书签同步'
+      
+      // Get sync status
+      let lastId = '无记录'
+      try {
+        const storage = await chrome.storage.local.get(['twitter_last_synced_id'])
+        lastId = storage.twitter_last_synced_id || '无记录'
+      } catch (e) {}
+      
+      content.innerHTML = `
+        <div class="plugin-section">
+          <div class="sync-status-card">
+            <div class="label">上次同步断点 (Tweet ID)</div>
+            <div class="value">${lastId}</div>
+          </div>
+          
+          <div class="sync-options">
+            <label class="radio-option">
+              <input type="radio" name="sync-mode" value="resume" checked>
+              <div class="option-text">
+                <span class="title">增量同步 (推荐)</span>
+                <span class="desc">从上次断点处继续，只抓取新书签</span>
+              </div>
+            </label>
+            
+            <label class="radio-option">
+              <input type="radio" name="sync-mode" value="full">
+              <div class="option-text">
+                <span class="title">全量同步</span>
+                <span class="desc">重新扫描所有书签 (耗时较长)</span>
+              </div>
+            </label>
+
+            <div class="input-group">
+              <label>保存文件夹</label>
+              <input type="text" id="sync-folder" value="X书签" placeholder="例如: X书签">
+            </div>
+
+            <div class="input-group">
+              <label>指定起始 ID (可选)</label>
+              <input type="text" id="sync-target-id" placeholder="如果不填，则使用上次断点">
+            </div>
+          </div>
+
+          <button class="plugin-action-btn primary" id="btn-start-sync">
+            <span class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+            </span>
+            <span>开始同步</span>
+          </button>
+        </div>
+      `
+      
+      // Bind events
+      const btnStart = content.querySelector('#btn-start-sync')
+      btnStart.addEventListener('click', async () => {
+        const mode = content.querySelector('input[name="sync-mode"]:checked').value
+        const folder = content.querySelector('#sync-folder').value
+        const manualTargetId = content.querySelector('#sync-target-id').value.trim()
+        
+        let targetId = null
+        if (mode === 'resume') {
+          targetId = manualTargetId || (lastId !== '无记录' ? lastId : null)
+        }
+
+        // Check if we are on Twitter Bookmarks page
+        const currentUrl = window.location.href
+        
+        if (!currentUrl.includes('twitter.com/i/bookmarks') && !currentUrl.includes('x.com/i/bookmarks')) {
+           // Navigate to bookmarks
+           addMessage('assistant', '⚠️ 正在跳转到推特书签页，请在页面加载完成后再次点击"开始同步"')
+           window.location.href = 'https://twitter.com/i/bookmarks'
+           return
+        }
+
+        // Send command to content script (self)
+        try {
+          if (window.__opencode_startSync) {
+            window.__opencode_startSync({
+              mode,
+              targetId,
+              folderName: folder
+            })
+          } else {
+            // Fallback: send message
+            chrome.runtime.sendMessage({
+              type: 'START_SYNC',
+              options: {
+                mode,
+                targetId,
+                folderName: folder
+              }
+            })
+          }
+          hidePluginPanel()
+          addMessage('assistant', '✅ 同步已启动，请保持页面打开')
+        } catch (e) {
+          addMessage('assistant', '❌ 启动失败: 请刷新推特页面后重试')
+          console.error(e)
+        }
       })
     }
     
@@ -501,7 +619,6 @@ tags: [web-clip, excerpt]
     
     if (prompt) {
       inputMessage.value = prompt
-      includePageCheckbox.checked = true
       await sendMessage()
     }
   }
@@ -564,9 +681,8 @@ tags: [web-clip, excerpt]
     chatArea.innerHTML = `
       <div class="welcome-message">
         <div class="welcome-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5">
-            <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity="0.3"/>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         </div>
         <div class="welcome-text">有什么可以帮你的？</div>
@@ -596,17 +712,12 @@ tags: [web-clip, excerpt]
     const message = inputMessage.value.trim()
     if (!message || isLoading) return
 
-    const includePage = includePageCheckbox.checked
-
     // 清空输入
     inputMessage.value = ''
     inputMessage.style.height = 'auto'
 
-    // 获取页面内容
-    let pageContent = null
-    if (includePage) {
-      pageContent = getPageContent()
-    }
+    // Always include page content
+    const pageContent = getPageContent()
 
     // 添加用户消息
     addMessage('user', message, pageContent)
@@ -645,7 +756,7 @@ tags: [web-clip, excerpt]
     const messageEl = document.createElement('div')
     messageEl.className = `message message-${role}`
 
-    const avatar = role === 'user' ? '🧑' : '🤖'
+    const avatar = role === 'user' ? 'U' : 'AI'
 
     let attachmentHtml = ''
     if (attachment && attachment.url) {
@@ -653,7 +764,9 @@ tags: [web-clip, excerpt]
         const domain = new URL(attachment.url).hostname
         attachmentHtml = `
           <div class="message-attachment">
-            <span>📎</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
             <span>${domain}</span>
           </div>
         `
@@ -680,7 +793,7 @@ tags: [web-clip, excerpt]
     messageEl.className = 'message message-assistant'
     messageEl.id = 'opencode-loading-message'
     messageEl.innerHTML = `
-      <div class="message-avatar">🤖</div>
+      <div class="message-avatar">AI</div>
       <div class="message-content">
         <div class="loading-dots">
           <span></span>
